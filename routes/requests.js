@@ -20,7 +20,6 @@ router.post('/', verifyToken, async (req, res) => {
       return res.status(400).json({ message: 'Invalid asset ID' });
     }
 
-    // Get asset details
     const asset = await db.collection('assets').findOne({ _id: new ObjectId(assetId) });
     
     if (!asset) {
@@ -31,10 +30,8 @@ router.post('/', verifyToken, async (req, res) => {
       return res.status(400).json({ message: 'Asset not available' });
     }
 
-    // Get employee details
     const employee = await db.collection('users').findOne({ email: req.user.email });
 
-    // Check if already requested
     const existingRequest = await db.collection('requests').findOne({
       assetId: new ObjectId(assetId),
       requesterEmail: req.user.email,
@@ -45,7 +42,6 @@ router.post('/', verifyToken, async (req, res) => {
       return res.status(400).json({ message: 'You already have a pending request for this asset' });
     }
 
-    // Create request
     const request = {
       assetId: new ObjectId(assetId),
       assetName: asset.productName,
@@ -149,24 +145,20 @@ router.put('/:id/approve', verifyHR, async (req, res) => {
       return res.status(400).json({ message: 'Request already processed' });
     }
 
-    // Check asset availability
     const asset = await db.collection('assets').findOne({ _id: request.assetId });
     
     if (!asset || asset.availableQuantity <= 0) {
       return res.status(400).json({ message: 'Asset no longer available' });
     }
 
-    // Get HR user to check employee limit
     const hrUser = await db.collection('users').findOne({ email: req.user.email });
 
-    // Check if employee is already affiliated
     const affiliation = await db.collection('employeeAffiliations').findOne({
       employeeEmail: request.requesterEmail,
       hrEmail: req.user.email,
       status: 'active'
     });
 
-    // If not affiliated, check if HR has reached employee limit
     if (!affiliation) {
       const currentEmployeeCount = await db.collection('employeeAffiliations').countDocuments({
         hrEmail: req.user.email,
@@ -179,7 +171,6 @@ router.put('/:id/approve', verifyHR, async (req, res) => {
         });
       }
 
-      // Create affiliation
       await db.collection('employeeAffiliations').insertOne({
         employeeEmail: request.requesterEmail,
         employeeName: request.requesterName,
@@ -190,14 +181,12 @@ router.put('/:id/approve', verifyHR, async (req, res) => {
         status: 'active'
       });
 
-      // Update HR's current employee count
       await db.collection('users').updateOne(
         { email: req.user.email },
         { $inc: { currentEmployees: 1 } }
       );
     }
 
-    // Update request status
     await db.collection('requests').updateOne(
       { _id: new ObjectId(id) },
       { 
@@ -209,13 +198,11 @@ router.put('/:id/approve', verifyHR, async (req, res) => {
       }
     );
 
-    // Decrease available quantity
     await db.collection('assets').updateOne(
       { _id: request.assetId },
       { $inc: { availableQuantity: -1 } }
     );
 
-    // Add to assigned assets
     await db.collection('assignedAssets').insertOne({
       assetId: request.assetId,
       assetName: request.assetName,
@@ -278,7 +265,7 @@ router.put('/:id/reject', verifyHR, async (req, res) => {
   }
 });
 
-// Return Asset (Employee) - Optional feature
+// Return Asset (Employee)
 router.put('/return/:assignmentId', verifyToken, async (req, res) => {
   try {
     const db = getDB();
@@ -302,7 +289,6 @@ router.put('/return/:assignmentId', verifyToken, async (req, res) => {
       return res.status(400).json({ message: 'This asset is not returnable' });
     }
 
-    // Update assignment status
     await db.collection('assignedAssets').updateOne(
       { _id: new ObjectId(assignmentId) },
       { 
@@ -313,13 +299,11 @@ router.put('/return/:assignmentId', verifyToken, async (req, res) => {
       }
     );
 
-    // Increase available quantity
     await db.collection('assets').updateOne(
       { _id: assignment.assetId },
       { $inc: { availableQuantity: 1 } }
     );
 
-    // Update request status
     await db.collection('requests').updateOne(
       {
         assetId: assignment.assetId,
