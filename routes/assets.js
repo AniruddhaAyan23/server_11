@@ -122,3 +122,39 @@ router.get('/:id', verifyToken, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+router.put('/:id', verifyHR, async (req, res) => {
+  try {
+    const db = getDB();
+    const { id } = req.params;
+    const { productName, productImage, productType, productQuantity } = req.body;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid asset ID' });
+    }
+
+    const updateData = {
+      updatedAt: new Date()
+    };
+
+    if (productName) updateData.productName = productName;
+    if (productImage) updateData.productImage = productImage;
+    if (productType) updateData.productType = productType;
+    if (productQuantity !== undefined) {
+      updateData.productQuantity = parseInt(productQuantity);
+    }
+
+    const result = await db.collection('assets').updateOne(
+      { _id: new ObjectId(id), hrEmail: req.user.email },
+      { $set: updateData }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: 'Asset not found or unauthorized' });
+    }
+
+    res.json({ message: 'Asset updated successfully' });
+  } catch (error) {
+    console.error('Update asset error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
