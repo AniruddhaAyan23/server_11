@@ -197,3 +197,31 @@ router.get('/stats/overview', verifyHR, async (req, res) => {
         } 
       }
     ]).toArray();
+    const requestStats = await db.collection('requests').aggregate([
+      { 
+        $match: { 
+          hrEmail: req.user.email,
+          requestStatus: 'approved'
+        } 
+      },
+      { 
+        $group: { 
+          _id: '$assetName', 
+          count: { $sum: 1 } 
+        } 
+      },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ]).toArray();
+
+    res.json({ 
+      typeStats,
+      requestStats
+    });
+  } catch (error) {
+    console.error('Get asset stats error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+export default router;
