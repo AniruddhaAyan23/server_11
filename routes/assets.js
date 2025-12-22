@@ -158,3 +158,27 @@ router.put('/:id', verifyHR, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+router.delete('/:id', verifyHR, async (req, res) => {
+  try {
+    const db = getDB();
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid asset ID' });
+    }
+
+    const result = await db.collection('assets').deleteOne({
+      _id: new ObjectId(id),
+      hrEmail: req.user.email
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: 'Asset not found or unauthorized' });
+    }
+
+    res.json({ message: 'Asset deleted successfully' });
+  } catch (error) {
+    console.error('Delete asset error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
