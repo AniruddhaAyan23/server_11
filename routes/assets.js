@@ -62,3 +62,16 @@ router.get('/hr-assets', verifyHR, async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit))
       .toArray();
+    const total = await db.collection('assets').countDocuments(query);
+
+    res.json({ 
+      assets, 
+      totalPages: Math.ceil(total / parseInt(limit)),
+      currentPage: parseInt(page),
+      totalAssets: total
+    });
+  } catch (error) {
+    console.error('Get HR assets error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
