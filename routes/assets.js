@@ -101,3 +101,24 @@ router.get('/available', verifyToken, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+router.get('/:id', verifyToken, async (req, res) => {
+  try {
+    const db = getDB();
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid asset ID' });
+    }
+
+    const asset = await db.collection('assets').findOne({ _id: new ObjectId(id) });
+
+    if (!asset) {
+      return res.status(404).json({ message: 'Asset not found' });
+    }
+
+    res.json({ asset });
+  } catch (error) {
+    console.error('Get asset error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
