@@ -21,3 +21,25 @@ router.post('/', verifyHR, async (req, res) => {
     if (!hrUser) {
       return res.status(404).json({ message: 'HR user not found' });
     }
+    const asset = {
+      productName,
+      productImage,
+      productType,
+      productQuantity: parseInt(productQuantity),
+      availableQuantity: parseInt(productQuantity),
+      dateAdded: new Date(),
+      hrEmail: req.user.email,
+      companyName: hrUser.companyName
+    };
+
+    const result = await db.collection('assets').insertOne(asset);
+    
+    res.status(201).json({ 
+      message: 'Asset added successfully', 
+      assetId: result.insertedId 
+    });
+  } catch (error) {
+    console.error('Add asset error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
