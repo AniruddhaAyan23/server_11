@@ -182,3 +182,18 @@ router.delete('/:id', verifyHR, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+router.get('/stats/overview', verifyHR, async (req, res) => {
+  try {
+    const db = getDB();
+    
+    // Get asset type distribution
+    const typeStats = await db.collection('assets').aggregate([
+      { $match: { hrEmail: req.user.email } },
+      { 
+        $group: { 
+          _id: '$productType', 
+          count: { $sum: 1 },
+          totalQuantity: { $sum: '$productQuantity' }
+        } 
+      }
+    ]).toArray();
