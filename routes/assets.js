@@ -75,3 +75,29 @@ router.get('/hr-assets', verifyHR, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+router.get('/available', verifyToken, async (req, res) => {
+  try {
+    const db = getDB();
+    const { search, type } = req.query;
+    
+    const query = { availableQuantity: { $gt: 0 } };
+    
+    if (search) {
+      query.productName = { $regex: search, $options: 'i' };
+    }
+    
+    if (type && type !== 'all') {
+      query.productType = type;
+    }
+
+    const assets = await db.collection('assets')
+      .find(query)
+      .sort({ dateAdded: -1 })
+      .toArray();
+    
+    res.json({ assets });
+  } catch (error) {
+    console.error('Get available assets error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
