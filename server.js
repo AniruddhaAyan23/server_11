@@ -21,3 +21,10 @@ app.use(cors({
 app.use(express.json());
 
 connectDB();
+
+app.use('/api/auth', authRoutes);
+app.use('/api/assets', assetRoutes);
+app.use('/api/requests', requestRoutes);
+app.use('/api/employees', employeeRoutes);
+app.use('/api/packages', packageRoutes);
+app.use('/api/payments', paymentRoutes);
