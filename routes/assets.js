@@ -43,3 +43,22 @@ router.post('/', verifyHR, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+router.get('/hr-assets', verifyHR, async (req, res) => {
+  try {
+    const db = getDB();
+    const { search, page = 1, limit = 10 } = req.query;
+    
+    const query = { hrEmail: req.user.email };
+    
+    if (search) {
+      query.productName = { $regex: search, $options: 'i' };
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const assets = await db.collection('assets')
+      .find(query)
+      .sort({ dateAdded: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .toArray();
