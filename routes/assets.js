@@ -21,6 +21,7 @@ router.post('/', verifyHR, async (req, res) => {
     if (!hrUser) {
       return res.status(404).json({ message: 'HR user not found' });
     }
+
     const asset = {
       productName,
       productImage,
@@ -43,6 +44,8 @@ router.post('/', verifyHR, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+// Get all assets for HR (with pagination and search)
 router.get('/hr-assets', verifyHR, async (req, res) => {
   try {
     const db = getDB();
@@ -62,6 +65,7 @@ router.get('/hr-assets', verifyHR, async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit))
       .toArray();
+    
     const total = await db.collection('assets').countDocuments(query);
 
     res.json({ 
@@ -75,6 +79,8 @@ router.get('/hr-assets', verifyHR, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+// Get all available assets (for employees to request)
 router.get('/available', verifyToken, async (req, res) => {
   try {
     const db = getDB();
@@ -101,6 +107,8 @@ router.get('/available', verifyToken, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+// Get single asset by ID
 router.get('/:id', verifyToken, async (req, res) => {
   try {
     const db = getDB();
@@ -122,6 +130,8 @@ router.get('/:id', verifyToken, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+// Update Asset (HR only)
 router.put('/:id', verifyHR, async (req, res) => {
   try {
     const db = getDB();
@@ -158,6 +168,8 @@ router.put('/:id', verifyHR, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+// Delete Asset (HR only)
 router.delete('/:id', verifyHR, async (req, res) => {
   try {
     const db = getDB();
@@ -182,11 +194,12 @@ router.delete('/:id', verifyHR, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+// Get asset statistics for HR (for charts)
 router.get('/stats/overview', verifyHR, async (req, res) => {
   try {
     const db = getDB();
     
-    // Get asset type distribution
     const typeStats = await db.collection('assets').aggregate([
       { $match: { hrEmail: req.user.email } },
       { 
@@ -197,6 +210,7 @@ router.get('/stats/overview', verifyHR, async (req, res) => {
         } 
       }
     ]).toArray();
+
     const requestStats = await db.collection('requests').aggregate([
       { 
         $match: { 
