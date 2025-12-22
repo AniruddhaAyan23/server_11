@@ -28,3 +28,7 @@ app.use('/api/requests', requestRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/packages', packageRoutes);
 app.use('/api/payments', paymentRoutes);
+
+app.get('/', (req, res) => {
+  res.json({ message: 'AssetVerse API is running' });
+});
