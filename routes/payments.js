@@ -15,9 +15,8 @@ router.post('/create-payment-intent', verifyHR, async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
+      amount: Math.round(amount * 100),
       currency: 'usd',
       metadata: {
         hrEmail: req.user.email,
@@ -46,14 +45,12 @@ router.post('/confirm-payment', verifyHR, async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Verify payment with Stripe
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
     if (paymentIntent.status !== 'succeeded') {
       return res.status(400).json({ message: 'Payment not completed' });
     }
 
-    // Update user's package
     await db.collection('users').updateOne(
       { email: req.user.email },
       { 
@@ -65,7 +62,6 @@ router.post('/confirm-payment', verifyHR, async (req, res) => {
       }
     );
 
-    // Save payment record
     await db.collection('payments').insertOne({
       hrEmail: req.user.email,
       packageName,
